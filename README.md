@@ -59,11 +59,11 @@ Example probe config is in `etc/condor-probe.cfg`:
     once = false     # run one time and exit, i.e. for running wtih cron (not recommended)
     
     [graphite]
-    enable = true        # enable output to graphite
-    host = localhost     # graphite host
-    port = 2004          # graphite pickle port
-    namespace = condor   # base namespace for metrics
-    meta_namespace = probes.condor   # namespace for probe metrics
+    enable = true                           # enable output to graphite
+    host = localhost                        # graphite host
+    port = 2004                             # graphite pickle port
+    namespace = clusters.mypool             # base namespace for metrics
+    meta_namespace = probes.condor-mypool   # namespace for probe metrics
     
     [influxdb]
     enable = false       # enable output to influxdb (not fully supported)
