@@ -102,7 +102,7 @@ def get_options():
     (cmd_opts,args) = parser.parse_args()
 
     config = ConfigParser.SafeConfigParser()
-    config.readfp(file("etc/condor/defaults.cfg"))
+    #config.readfp(file("etc/condor/defaults.cfg"))
     config.read(args)
 
     def parse_tags(tags):
