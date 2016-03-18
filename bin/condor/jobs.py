@@ -34,8 +34,8 @@ class Jobs(object):
         """
         counters = []
 
-        exp_name = job_classad["AccountingGroup"].split(".")[0][6:]
-        user_name = job_classad["Owner"]
+        exp_name = job_classad.get("AccountingGroup","group_none").split(".")[0][6:]
+        user_name = job_classad.get("Owner","unknown")
 
         if job_classad["JobUniverse"] == 7:
             counters = [".dag.totals"]
