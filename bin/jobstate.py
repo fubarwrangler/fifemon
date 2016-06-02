@@ -38,7 +38,7 @@ class Jobs(object):
             return
 
         for a in ads:
-            logger.info("Querying jobs from schedd %s"%a['Name'])
+            logger.info("Querying jobs from schedd %s", a['Name'])
             retries = 0
             while retries < max_retries:
                 try:
@@ -111,7 +111,7 @@ def get_options():
     parser.add_option('--pool', default="localhost", help="condor pool to query")
     parser.add_option('--constraint', default=True, help="limit condor query")
     parser.add_option('--interval', default=300, help="run interval (s)")
-    parser.add_option('-1','--once', action="store_true", help="run once and exit")
+    parser.add_option('-1', '--once', action="store_true", help="run once and exit")
     parser.add_option('-d', '--debug', action="store_true", help="enable debug logging")
     (opts, args) = parser.parse_args()
     return opts

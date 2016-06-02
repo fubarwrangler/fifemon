@@ -4,7 +4,6 @@ import re
 import logging
 import time
 
-import classad
 import htcondor
 
 logger = logging.getLogger(__name__)
@@ -60,7 +59,7 @@ def get_pool_slots(pool, retry_delay=30, max_retries=4):
     retries = 0
     while retries < max_retries:
         try:
-            #startd_ads = coll.locateAll(htcondor.DaemonTypes.Startd)
+            # startd_ads = coll.locateAll(htcondor.DaemonTypes.Startd)
             startd_ads = coll.query(htcondor.AdTypes.Startd, True,
                                     ['SlotType', 'State', 'Name', 'SlotWeight',
                                      'Cpus', 'TotalSlotCpus', 'TotalCpus',

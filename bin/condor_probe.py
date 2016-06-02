@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-from collections import defaultdict
-import re
 from optparse import OptionParser
 import logging
-import time
 import os
 import ConfigParser
 import pprint
@@ -12,6 +9,7 @@ import fifemon
 import condor
 
 logger = logging.getLogger(__name__)
+
 
 class CondorProbe(fifemon.Probe):
     """

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 from collections import defaultdict
 from optparse import OptionParser
-import time
 import logging
 import datetime
 import ConfigParser

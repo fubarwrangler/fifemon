@@ -56,21 +56,20 @@ influxdb_host:  %s
 influxdb_port:  %d
 influxdb_db:    %d
 
-""" % \
-(self.namespace,
-    self.meta_namespace,
-    self.interval,
-    self.retries,
-    self.delay,
-    self.test,
-    self.once,
-    self.use_graphite,
-    self.graphite_host,
-    self.graphite_pickle_port,
-    self.use_influxdb,
-    self.influxdb_host,
-    self.influxdb_port,
-    self.influxdb_db)
+""" % (self.namespace,
+            self.meta_namespace,
+            self.interval,
+            self.retries,
+            self.delay,
+            self.test,
+            self.once,
+            self.use_graphite,
+            self.graphite_host,
+            self.graphite_pickle_port,
+            self.use_influxdb,
+            self.influxdb_host,
+            self.influxdb_port,
+            self.influxdb_db)
 
     def __str__(self):
         return self.__unicode__()
