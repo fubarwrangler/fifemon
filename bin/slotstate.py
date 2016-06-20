@@ -20,17 +20,12 @@ class Slots(object):
     def get_stats(self, retry_delay=30, max_retries=4, constraint=None, extra_stats=None):
 
         stats = ["Name", "State", "SlotType",
-                 "GLIDEIN_Site", "GLIDEIN_Resource_Name", "GLIDEIN_ResourceName",
+                 "Owner",
                  "DaemonStartTime", "GLIDEIN_ToDie", "MyCurrentTime",
                  "Disk", "Memory", "Cpus",
                  "LoadAvg", "TotalCondorLoadAvg"]
         if extra_stats:
             stats += extra_stats
-
-        if constraint is None:
-            constraint = "is_glidein"
-        else:
-            constraint = "is_glidein && (%s)" % constraint
 
         retries = 0
         while retries < max_retries:
@@ -40,6 +35,7 @@ class Slots(object):
             except:
                 logger.warning("Trouble getting pool {0} startds, retrying in {1}s.".format(
                     self.pool, retry_delay))
+                logger.exception("what?")
                 retries += 1
                 ads = None
                 time.sleep(retry_delay)

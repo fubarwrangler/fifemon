@@ -19,7 +19,6 @@ class CondorProbe(fifemon.Probe):
         post_pool_status:   collect main daemon (schedd, collector,
                             negotiator) statistics
         post_pool_slots:    collect & aggregate slot (startd) status
-        post_pool_glideins: collect & aggregate glidein slot status
         post_pool_prio:     collect user priorities
         post_pool_jobs:     collect & aggregate user job status
     """
@@ -55,19 +54,9 @@ class CondorProbe(fifemon.Probe):
                     self.graphite.send_dict(self.namespace,
                                             dataset["metrics"],
                                             send_data=(not self.test))
-                if self.use_influxdb:
-                    self.influxdb.send_dict(dataset["metrics"],
-                                            send_data=(not self.test),
-                                            schema=dataset["schema"],
-                                            tags=self.influxdb_tags)
         if self.post_pool_slots:
             logger.info('querying pool {0} slots'.format(self.pool))
             data = condor.get_pool_slots(self.pool, self.delay, self.retries)
-            if self.use_graphite:
-                self.graphite.send_dict(self.namespace+".slots", data, send_data=(not self.test))
-        if self.post_pool_glideins:
-            logger.info('querying pool {0} glidein slots'.format(self.pool))
-            data = condor.get_pool_glidein_slots(self.pool, self.delay, self.retries)
             if self.use_graphite:
                 self.graphite.send_dict(self.namespace+".slots", data, send_data=(not self.test))
         if self.post_pool_prio:
@@ -127,11 +116,6 @@ def get_options():
         'meta_namespace':    config.get("graphite", "meta_namespace"),
         'graphite_host':     config.get("graphite", "host"),
         'graphite_port':     config.getint("graphite", "port"),
-        'use_influxdb':      config.getboolean("influxdb", "enable"),
-        'influxdb_host':     config.get("influxdb", "host"),
-        'influxdb_port':     config.get("influxdb", "port"),
-        'influxdb_db':       config.get("influxdb", "db"),
-        'influxdb_tags':     parse_tags(config.get("influxdb", "tags")),
         'test':              cmd_opts.test or config.getboolean("probe", "test"),
         'once':              cmd_opts.once or config.getboolean("probe", "once"),
         'interval':          config.getint("probe", "interval"),

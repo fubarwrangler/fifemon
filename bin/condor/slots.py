@@ -66,7 +66,8 @@ def get_pool_slots(pool, retry_delay=30, max_retries=4):
                                      'Disk', 'TotalSlotDisk', 'TotalDisk',
                                      'Memory', 'TotalSlotMemory', 'TotalMemory',
                                      'LoadAvg', 'TotalCondorLoadAvg', 'TotalLoadAvg',
-                                     'AccountingGroup', 'RemoteGroup', 'RemoteOwner'])
+                                     'AccountingGroup', 'RemoteGroup', 'RemoteOwner',
+                                     'RealExperiment', 'Experiment', ])
         except:
             logger.warning(
                 "trouble getting pool {0} startds, retrying in {1}s.".format(pool, retry_delay))
@@ -111,7 +112,7 @@ def get_pool_slots(pool, retry_delay=30, max_retries=4):
                     metric = ".".join([slot_type, "totals", k])
                     data[metric] += a[k]
         if state == "Claimed":
-            (group, owner) = ("Unknown", "Unknown")
+            (group, owner) = ("Root", "Unknown")
             if "AccountingGroup" in a:
                 m = re.match(r'group_(\S+)\.(\S+)@\S+$', a["AccountingGroup"])
                 if m:
@@ -149,58 +150,7 @@ def get_pool_slots(pool, retry_delay=30, max_retries=4):
 
     return data
 
-
-def get_pool_glidein_slots(pool, retry_delay=30, max_retries=4):
-    coll = htcondor.Collector(pool)
-    retries = 0
-    while retries < max_retries:
-        try:
-            startd_ads = coll.query(htcondor.AdTypes.Startd, 'is_glidein==True',
-                                    ['GLIDEIN_Site', 'GLIDEIN_Resource_Name', 'GLIDEIN_ResourceName', 'State',
-                                     'DaemonStartTime', 'Disk', 'Memory', 'Cpus'])
-        except:
-            logger.warning(
-                "trouble getting pool {0} startds, retrying in {1}s.".format(pool, retry_delay))
-            retries += 1
-            startd_ads = None
-            time.sleep(retry_delay)
-        else:
-            break
-
-    if startd_ads is None:
-        logger.error(
-            "trouble getting pool {0} startds, giving up.".format(pool))
-        return {}
-
-    data = defaultdict(int)
-    load = defaultdict(float)
-    for a in startd_ads:
-        site = a.get("GLIDEIN_Site", "Unknown")
-        resource = a.get("GLIDEIN_Resource_Name", a.get(
-            "GLIDEIN_ResourceName", "Unknown"))
-        state = a.get("State", "Unknown")
-        if (time.time() - a.get("DaemonStartTime", time.time())) < 300:
-            state = "New"
-
-        metrics = [".".join(["glideins", "totals", "NumSlots"]),
-                   ".".join(["glideins", state, "totals", "NumSlots"]),
-                   ".".join(["glideins", state, "sites",
-                             site, "totals", "NumSlots"]),
-                   ".".join(["glideins", state, "sites", site, "resources", resource, "NumSlots"])]
-        for m in metrics:
-            data[m] += 1
-
-        for k in ["Disk", "Memory", "Cpus"]:
-            metrics = [".".join(["glideins", "totals", k]),
-                       ".".join(["glideins", state, "totals", k]),
-                       ".".join(
-                           ["glideins", state, "sites", site, "totals", k]),
-                       ".".join(["glideins", state, "sites", site, "resources", resource, k])]
-            for m in metrics:
-                data[m] += a[k]
-
-    return data
-
 if __name__ == "__main__":
-    import pprint
-    pprint.pprint(dict(get_pool_slots()))
+    import pprint, sys
+    pprint.pprint(dict(get_pool_slots(sys.argv[1])))
+    pprint.pprint(dict(get_pool_resource_utilization(sys.argv[1])))

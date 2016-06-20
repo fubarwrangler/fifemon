@@ -3,7 +3,6 @@ import time
 from collections import defaultdict
 import logging
 
-import classad
 import htcondor
 
 logger = logging.getLogger(__name__)
@@ -35,41 +34,19 @@ class Jobs(object):
         """
         counters = []
 
-        exp_name = job_classad.get(
-            "AccountingGroup", "group_none").split(".")[0][6:]
-        user_name = job_classad.get("Owner", "unknown")
+        # exp_name = job_classad.get(
+        # "AccountingGroup", "group_none").split(".")[0][6:]
+        exp_name = job_classad.get("RealExperiment", "UnknownExp")
+        user_name = job_classad.get("Owner", "UnknownOwner")
 
         if job_classad["JobUniverse"] == 7:
             counters = [".dag.totals"]
         elif job_classad["JobStatus"] == 1:
             counters = [".idle.totals"]
-            if "DESIRED_usage_model" in job_classad:
-                models = set(job_classad["DESIRED_usage_model"].split(","))
-                if "DESIRED_Sites" in job_classad:
-                    sites = job_classad["DESIRED_Sites"].split(",")
-                    for s in sites:
-                        counters.append(".idle.sites." + s)
-                    if "Fermigrid" not in sites:
-                        models.discard("DEDICATED")
-                        models.discard("OPPORTUNISTIC")
-                models_sorted = list(models)
-                if len(models_sorted) == 0:
-                    models_sorted = ["impossible"]
-                else:
-                    models_sorted.sort()
-                counters.append(".idle.usage_models." +
-                                "_".join(models_sorted))
-            else:
-                counters.append(".idle.usage_models.unknown")
+            counters.append(".idle.unknown")
         elif job_classad["JobStatus"] == 2:
             counters = [".running.totals"]
-            if "MATCH_GLIDEIN_Site" in job_classad:
-                site = job_classad["MATCH_GLIDEIN_Site"]
-                if site == "FNAL" and "MATCH_EXP_JOBGLIDEIN_ResourceName" in job_classad:
-                    site = job_classad["MATCH_EXP_JOBGLIDEIN_ResourceName"]
-                counters.append(".running.sites." + site)
-            else:
-                counters.append(".running.sites.unknown")
+            counters.append(".running.sites." + exp_name)
         elif job_classad["JobStatus"] == 5:
             counters = [".held.totals"]
         else:
@@ -131,14 +108,13 @@ class Jobs(object):
         counts = defaultdict(int)
         for a in ads:
             retries = 0
+            logger.debug("Trying schedd: %s", a['Name'])
             while retries < max_retries:
                 try:
                     schedd = htcondor.Schedd(a)
                     constraint = True
-                    results = schedd.query(constraint, ["ClusterId", "ProcId", "Owner",
-                                                        "MATCH_GLIDEIN_Site", "MATCH_EXP_JOBGLIDEIN_ResourceName",
-                                                        "AccountingGroup", "JobStatus",
-                                                        "DESIRED_usage_model", "DESIRED_Sites", "JobUniverse",
+                    results = schedd.query(constraint, ["ClusterId", "ProcId", "Owner", "AccountingGroup",
+                                                        "JobStatus", "JobUniverse", "RealExperiment", "Experiment",
                                                         "QDate", "ServerTime", "JobCurrentStartDate", "RemoteUserCpu",
                                                         "EnteredCurrentStatus", "NumRestarts",
                                                         "RequestMemory", "ResidentSetSize_RAW",
@@ -198,3 +174,8 @@ class Jobs(object):
                                 m + ".disk_usage_b"] += r.eval("DiskUsage_RAW") * 1024
 
         return counts
+
+if __name__ == "__main__":
+    import pprint, sys
+    j = Jobs(pool=sys.argv[1])
+    pprint.pprint(dict(j.get_job_count()))
