@@ -35,6 +35,7 @@ def get_pool_priorities(pool, retry_delay=30, max_retries=4):
         if p['IsAccountingGroup']:
             continue
         a, schedd = p['Name'].split('@')
+        # FIXME: ???
         parts = a.split('.')
         exp = parts[0].split("_")[-1]
         name = parts[-1]

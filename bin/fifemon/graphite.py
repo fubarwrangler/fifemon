@@ -36,7 +36,7 @@ class Graphite(object):
             timestamp = time.time()
         post_data = []
         # turning data dict into [('$path.$key',($timestamp,$value)),...]]
-        for k, v in data.iteritems():
+        for k, v in sorted(data.iteritems()):
             t = (namespace+"."+k, (timestamp, v))
             post_data.append(t)
             logger.debug(str(t))
