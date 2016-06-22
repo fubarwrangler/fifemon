@@ -2,10 +2,10 @@
 from optparse import OptionParser
 import logging
 import ConfigParser
-import pprint
 import sys
 
 import fifemon
+import htcondor
 import condor
 
 logger = logging.getLogger(__name__)
@@ -24,30 +24,28 @@ class CondorProbe(fifemon.Probe):
     """
 
     def __init__(self, *args, **kwargs):
-        self.pool = args[0]
-        self.address = self.pool['address']
+        self.meta = args[0]
+        self.address = self.meta['address']
         self.post_pool_status = kwargs.pop('post_pool_status', True)
         self.post_pool_slots = kwargs.pop('post_pool_slots', True)
         self.post_pool_prio = kwargs.pop('post_pool_prio', True)
         self.post_pool_jobs = kwargs.pop('post_pool_jobs', False)
 
-        if self.post_pool_jobs:
-            self.jobs = condor.Jobs(self.pool)
+        self.pool = htcondor.Collector(self.address)
 
         super(CondorProbe, self).__init__(*args, **kwargs)
 
     def post(self):
 
-        # if self.post_pool_status:
-        #     logger.info('querying pool {0} status'.format(self.pool))
-        #     data = condor.get_pool_status(self.pool, self.delay, self.retries)
-        #     for dataset in data:
-        #         if self.use_graphite:
-        #             self.graphite.send_dict(self.namespace,
-        #                                     dataset["metrics"],
-        #                                     send_data=(not self.test))
+        # logger.info('querying pool {0} status'.format(self.pool))
+        # data = condor.get_pool_status(self.pool, self.delay, self.retries)
+        # print len(data)
+        # for dataset in data:
+        #     self.graphite.send_dict(self.namespace,
+        #                             dataset["metrics"],
+        #                             send_data=(not self.test))
         logger.info('querying pool %s slots', self.pool)
-        data = condor.get_pool_slots(self.address, self.delay, self.retries)
+        data = condor.get_pool_slots(self.pool, self.delay, self.retries)
         self.graphite.send_dict(self.namespace+".slots", data, send_data=(not self.test))
         # if self.post_pool_prio:
         #     logger.info('querying pool {0} priorities'.format(self.pool))

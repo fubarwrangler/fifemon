@@ -38,7 +38,6 @@ graphite_host:  %s
 graphite_pickle_port:  %s
 
 """ % (self.namespace,
-            self.meta_namespace,
             self.interval,
             self.retries,
             self.delay,
@@ -61,7 +60,7 @@ graphite_pickle_port:  %s
         meta_data = {
             "update_time": duration,
         }
-        self.graphite.send_dict(self.pool, meta_data, send_data=(not self.test))
+        self.graphite.send_dict(self.namespace + '.meta', meta_data, send_data=(not self.test))
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

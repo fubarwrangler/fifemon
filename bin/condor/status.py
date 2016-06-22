@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 def get_pool_status(pool, retry_delay=30, max_retries=4):
-    coll = htcondor.Collector(pool)
 
     daemons = {"schedds": htcondor.DaemonTypes.Schedd,
                "collectors": htcondor.DaemonTypes.Collector,
@@ -23,7 +22,7 @@ def get_pool_status(pool, retry_delay=30, max_retries=4):
         retries = 0
         while retries < max_retries:
             try:
-                ads = coll.locateAll(daemon)
+                ads = pool.locateAll(daemon)
             except:
                 logger.warning("trouble getting pool {0} {1} status, retrying in {2}s.".format(
                     pool, daemon_type, retry_delay))

@@ -3,6 +3,7 @@ from collections import defaultdict
 import re
 import logging
 import time
+import fifemon
 
 import htcondor
 
@@ -15,74 +16,60 @@ def sanitize(key):
     return key.replace(".", "_").replace("@", "-").replace(" ", "_")
 
 
-def get_pool_resource_utilization(pool, retry_delay=30, max_retries=4):
-    coll = htcondor.Collector(pool)
-    retries = 0
-    while retries < max_retries:
-        try:
-            schedd_ads = coll.locateAll(htcondor.DaemonTypes.Schedd)
-        except:
-            logger.warning(
-                "trouble getting pool {0} schedds, retrying in {1}s.".format(pool, retry_delay))
-            retries += 1
-            schedd_ads = None
-            time.sleep(retry_delay)
-        else:
-            break
+class Hierarchy(object):
+    def __init__(self, node, children=None):
+        self.data = node
+        self.children = children
 
-    if schedd_ads is None:
-        logger.error(
-            "trouble getting pool {0} schedds, giving up.".format(pool))
-        return {}
 
-    memory_usage = 0
-    disk_usage = 0
-    for ad in schedd_ads:
-        try:
-            schedd = htcondor.Schedd(ad)
-            results = schedd.query(
-                'jobstatus==2', ['ResidentSetSize_RAW', 'DiskUsage_RAW'])
-        except Exception as e:
-            logger.error(e)
-        else:
-            for r in results:
-                memory_usage += r.get('ResidentSetSize_RAW', 0)
-                disk_usage += r.get('DiskUsage_RAW', 0)
-    return {
-        "MemoryUsage": memory_usage / 1024,
-        "DiskUsage": disk_usage,
+def ad_transform(ad):
+    transforms = {
+        'AccountingGroup': lambda x: '.'.join(x.split('@')[0].split('.')[:-1]),
+        'SlotWeight': lambda x: x.eval(),
     }
+    for key in transforms:
+        if key in ad:
+            ad[key] = transforms[key](ad[key])
+
+
 
 
 def get_pool_slots(pool, retry_delay=30, max_retries=4):
-    coll = htcondor.Collector(pool)
     retries = 0
-    while retries < max_retries:
-        try:
-            # startd_ads = coll.locateAll(htcondor.DaemonTypes.Startd)
-            startd_ads = coll.query(htcondor.AdTypes.Startd, True,
-                                    ['SlotType', 'State', 'Name', 'SlotWeight',
-                                     'Cpus', 'TotalSlotCpus', 'TotalCpus',
-                                     'Disk', 'TotalSlotDisk', 'TotalDisk',
-                                     'Memory', 'TotalSlotMemory', 'TotalMemory',
-                                     'LoadAvg', 'TotalCondorLoadAvg', 'TotalLoadAvg',
-                                     'AccountingGroup', 'RemoteGroup', 'RemoteOwner',
-                                     'RealExperiment', 'Experiment', ])
-        except:
-            logger.warning(
-                "trouble getting pool {0} startds, retrying in {1}s.".format(pool, retry_delay))
-            retries += 1
-            startd_ads = None
-            time.sleep(retry_delay)
-        else:
-            break
+
+    try:
+        startd_ads = pool.query(htcondor.AdTypes.Startd, True,
+                                ['SlotType', 'State', 'Name', 'SlotWeight',
+                                 'Cpus', 'TotalSlotCpus', 'TotalCpus',
+                                 'Disk', 'TotalSlotDisk', 'TotalDisk',
+                                 'Memory', 'TotalSlotMemory', 'TotalMemory',
+                                 'LoadAvg', 'TotalCondorLoadAvg', 'TotalLoadAvg',
+                                 'AccountingGroup', 'RemoteGroup', 'RemoteOwner',
+                                 'RealExperiment', 'Experiment', ])
+    except:
+        logger.warning(
+            "trouble getting pool {0} startds, retrying in {1}s.".format(pool, retry_delay))
+        retries += 1
+        startd_ads = None
+        return {}
 
     if startd_ads is None:
         logger.error(
             "trouble getting pool {0} startds, giving up.".format(pool))
         return {}
 
-    data = defaultdict(int)
+    # Name, default value, not-found action (+ advance, 0 halt, - go back)
+    base_ns = [('SlotType', 'Static', 0), ('State', 'Unknown', 1),
+               ('AccountingGroup', 'Base', 1), ('Owner', -2)]
+    grouping = {'type': ['Static', 'Dynamic'], 'foo': [], }
+    aggregators = {'Cpus': 'State', 'Disk', 'LoadAvg', 'Memory', 'NumSlots', 'Weight'}
+
+    for ad in startd_ads:
+        ad = ad_transform(ad)
+        for
+
+
+    # data = defaultdict(int)
     load = defaultdict(float)
     for a in startd_ads:
         slot_type = a.get("SlotType", "Static")
@@ -94,8 +81,8 @@ def get_pool_slots(pool, retry_delay=30, max_retries=4):
                           "TotalMemory", "TotalSlotMemory",
                           "TotalCpus", "TotalSlotCpus",
                           "TotalLoadAvg", "LoadAvg", "TotalCondorLoadAvg"]:
-                    #metric = ".".join([slot_type, "startds", sanitize(a["Name"]), k])
-                    #data[metric] = a[k]
+                    # metric = ".".join([slot_type, "startds", sanitize(a["Name"]), k])
+                    # data[metric] = a[k]
                     metric = ".".join([slot_type, "totals", k])
                     data[metric] += a[k]
                 # slot is effectively fully utilized, reclassffy remaining
@@ -107,8 +94,8 @@ def get_pool_slots(pool, retry_delay=30, max_retries=4):
                           "TotalMemory", "TotalSlotMemory", "Memory",
                           "TotalCpus", "TotalSlotCpus", "Cpus",
                           "TotalLoadAvg", "LoadAvg", "TotalCondorLoadAvg"]:
-                    #metric = ".".join([slot_type, "startds", sanitize(a["Name"]), k])
-                    #data[metric] = a[k]
+                    # metric = ".".join([slot_type, "startds", sanitize(a["Name"]), k])
+                    # data[metric] = a[k]
                     metric = ".".join([slot_type, "totals", k])
                     data[metric] += a[k]
         if state == "Claimed":
@@ -144,13 +131,10 @@ def get_pool_slots(pool, retry_delay=30, max_retries=4):
                 data[metric] += a[k]
             metric = ".".join([slot_type, state, "NumSlots"])
             data[metric] += 1
-    for k, v in get_pool_resource_utilization(pool, retry_delay, max_retries).iteritems():
-        metric = ".".join(["jobs", "totals", k])
-        data[metric] = v
 
     return data
 
 if __name__ == "__main__":
-    import pprint, sys
+    import pprint
+    import sys
     pprint.pprint(dict(get_pool_slots(sys.argv[1])))
-    pprint.pprint(dict(get_pool_resource_utilization(sys.argv[1])))
