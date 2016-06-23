@@ -1,53 +1,44 @@
 #!/usr/bin/python
 import logging
-import time
-
-import classad
 import htcondor
 
 logger = logging.getLogger(__name__)
 
 
-def get_pool_priorities(pool, retry_delay=30, max_retries=4):
-    coll = htcondor.Collector(pool)
-    retries = 0
-    while retries < max_retries:
-        try:
-            ad = coll.locate(htcondor.DaemonTypes.Negotiator)
-            n = htcondor.Negotiator(ad)
-            prio = n.getPriorities()
-        except:
-            logging.warning("Trouble communicating with pool {0} negotiator, retrying in {1}s.".format(
-                pool, retry_delay))
-            retries += 1
-            prio = None
-            time.sleep(retry_delay)
-        else:
-            break
+def get_pool_priorities(self):
 
-    if prio is None:
-        logging.error(
-            "Trouble communicating with pool {0} negotiator, giving up.".format(pool))
+    try:
+        ad = self.get_daemons('negotiator')[0]
+        n = htcondor.Negotiator(ad)
+        prio = n.getPriorities(False)
+    except:
+        logging.exception('Trouble communicating with %s negotiator', self.name)
         return {}
 
     data = {}
     for p in prio:
         if p['IsAccountingGroup']:
             continue
-        a, schedd = p['Name'].split('@')
-        # FIXME: ???
-        parts = a.split('.')
-        exp = parts[0].split("_")[-1]
-        name = parts[-1]
-        basename = "{0}.{1}.{2}".format(
-            schedd.replace(".", "_"),
-            exp,
-            name)
-        for metric in ["ResourcesUsed",
-                       "AccumulatedUsage",
-                       "WeightedAccumulatedUsage",
-                       "Priority",
-                       "WeightedResourcesUsed",
-                       "PriorityFactor"]:
-            data[basename + "." + metric] = p[metric]
+
+        print p
+        ag = p['AccountingGroup']
+        if ag == '<none>':
+            ag = 'nogroup'
+            user = p['Name'].replace('.', '_')
+        else:
+            user = p['Name'][len(ag) + 1:]
+
+        username, domain = (x.replace('.', '_') for x in user.split('@'))
+
+        ag = ag[ag.startswith('group_') and len('group_'):]
+
+        basename = '{0}.{1}.{2}'.format(domain, ag.replace('.', '_'), username)
+
+        for metric in ['ResourcesUsed',
+                       'AccumulatedUsage',
+                       'WeightedAccumulatedUsage',
+                       'Priority',
+                       'WeightedResourcesUsed',
+                       'PriorityFactor']:
+            data[basename + '.' + metric] = p[metric]
     return data

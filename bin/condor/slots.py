@@ -13,28 +13,19 @@ def sanitize(key):
     return key.replace(".", "_").replace("@", "-").replace(" ", "_")
 
 
-def get_pool_slots(pool, extras=[]):
-    retries = 0
+def get_pool_slots(self, extras=[]):
+
     logger.debug("Pool extras are: %s", extras)
 
-    try:
-        startd_ads = pool.query(htcondor.AdTypes.Startd, True,
-                                ['SlotType', 'State', 'Name', 'SlotWeight',
-                                 'Cpus', 'TotalSlotCpus', 'TotalCpus',
-                                 'Disk', 'TotalSlotDisk', 'TotalDisk',
-                                 'Memory', 'TotalSlotMemory', 'TotalMemory',
-                                 'LoadAvg', 'TotalCondorLoadAvg', 'TotalLoadAvg',
-                                 'AccountingGroup', 'RemoteGroup', 'RemoteOwner',
-                                 'Owner'] + extras)
-    except:
-        logger.warning("trouble getting pool %s startds", pool.name)
-        retries += 1
-        startd_ads = None
-        return {}
+    startd_ads = self.startd_query(
+        ['SlotType', 'State', 'Name', 'SlotWeight', 'Cpus', 'TotalSlotCpus',
+         'TotalCpus', 'Disk', 'TotalSlotDisk', 'TotalDisk', 'Memory', 'Owner',
+         'TotalSlotMemory', 'TotalMemory', 'LoadAvg', 'TotalCondorLoadAvg',
+         'TotalLoadAvg', 'AccountingGroup', 'RemoteGroup', 'RemoteOwner'] + extras
+    )
 
     if startd_ads is None:
-        logger.error(
-            "trouble getting pool {0} startds, giving up.".format(pool))
+        logger.error("Failed to get pool %s startd from collector", self.name)
         return {}
 
     data = defaultdict(int)

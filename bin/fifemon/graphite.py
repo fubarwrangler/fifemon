@@ -22,11 +22,12 @@ def sanitize_key(key):
 
 
 class Graphite(object):
-    def __init__(self, host="localhost", pickle_port=2004):
+    def __init__(self, host="localhost", pickle_port=2004, send_data=True):
         self.graphite_host = host
         self.graphite_pickle_port = pickle_port
+        self.send_data = send_data
 
-    def send_dict(self, namespace, data, send_data=True, timestamp=None, batch_size=1000):
+    def send_dict(self, namespace, data, timestamp=None, batch_size=1000):
         """send data contained in dictionary as {k: v} to graphite dataset
         $namespace.k with current timestamp"""
         if data is None:
@@ -46,7 +47,7 @@ class Graphite(object):
             header = struct.pack("!L", len(payload))
             message = header + payload
             # throw data at graphite
-            if send_data:
+            if self.send_data:
                 s = socket.socket()
                 try:
                     s.connect((self.graphite_host, self.graphite_pickle_port))
