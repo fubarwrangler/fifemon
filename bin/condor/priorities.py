@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import logging
 import htcondor
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -15,12 +16,12 @@ def get_pool_priorities(self):
         logging.exception('Trouble communicating with %s negotiator', self.name)
         return {}
 
+    now = time.time()
     data = {}
     for p in prio:
-        if p['IsAccountingGroup']:
+        if p['IsAccountingGroup'] or now - p['LastUsageTime'] > 3600 * 24 * 60:
             continue
 
-        print p
         ag = p['AccountingGroup']
         if ag == '<none>':
             ag = 'nogroup'

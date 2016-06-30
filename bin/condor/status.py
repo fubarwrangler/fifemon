@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 def get_pool_status(self):
 
     data = {}
-    daemon_data = ((x, self.get_daemons(x)) for x in ('collector', 'negotiator', 'schedd'))
+    daemon_data = [(x, self.get_daemons(x)) for x in ('collector', 'negotiator')]
+    daemon_data += [('schedd', list(self.local_schedds()))]
     for daemon_type, ads in daemon_data:
 
         if ads is None:

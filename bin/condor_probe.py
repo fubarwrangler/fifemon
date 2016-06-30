@@ -49,9 +49,7 @@ if __name__ == '__main__':
     opts, pool = get_options()
     loglevel = logging.DEBUG if opts['debug'] else logging.INFO
     logging.basicConfig(level=loglevel, format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
-    print opts, pool
     probe = condor.CondorProbe(pool, **opts)
-    print probe.pool
     probe.run()
     # probe = CondorProbe(**opts)
     # probe.run()

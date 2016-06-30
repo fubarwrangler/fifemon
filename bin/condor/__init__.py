@@ -58,7 +58,7 @@ class CondorProbe(fifemon.Probe):
         super(CondorProbe, self).__init__(*args, **kwargs)
 
     def local_schedds(self):
-        for ad in self.get_daemon('schedd'):
+        for ad in self.get_daemons('schedd'):
             if ad.get('CollectorHost') == self.address:
                 yield ad
 
