@@ -2,8 +2,7 @@ import os
 os.environ['_CONDOR_GSI_SKIP_HOST_CHECK'] = "true"
 
 
-from .jobs import Jobs
-import fifemon
+import probes
 
 import logging
 import htcondor
@@ -11,7 +10,7 @@ import htcondor
 logger = logging.getLogger(__name__)
 
 
-class CondorProbe(fifemon.Probe):
+class CondorProbe(probes.Probe):
     """
     Query HTCondor pool and post statistics to Graphite.
 
@@ -25,9 +24,9 @@ class CondorProbe(fifemon.Probe):
 
     all_probes = set(['slots', 'status', 'prio', 'jobs'])
 
-    from .status import get_pool_status
-    from .slots import get_pool_slots
-    from .priorities import get_pool_priorities
+    from .status import get_pool_status             # noqa: not used
+    from .slots import get_pool_slots               # noqa: not used
+    from .priorities import get_pool_priorities     # noqa: not used
 
     def __init__(self, *args, **kwargs):
         self.meta = args[0]

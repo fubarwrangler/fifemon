@@ -2,8 +2,6 @@
 from collections import defaultdict
 import logging
 
-import htcondor
-
 logger = logging.getLogger(__name__)
 
 
@@ -14,6 +12,8 @@ def sanitize(key):
 
 
 def get_pool_slots(self, extras=[]):
+
+    extras = filter(None, extras)
 
     logger.debug("Pool extras are: %s", extras)
 
@@ -64,10 +64,9 @@ def get_pool_slots(self, extras=[]):
                 group = a['RemoteGroup'] if a['RemoteGroup'] != '<none>' else grp_default
             owner = a.get('Owner', a.get('RemoteOwner', 'UnknownOwner').split('@')[-1])
 
-            hierarchy += [sanitize(group), sanitize(owner)]
             for key in extras:
-                hierarchy.append(a.get(key, 'undef'))
-
+                hierarchy.append(sanitize(a.get(key, 'undef')))
+            hierarchy += [sanitize(group), sanitize(owner)]
             for k in ['Disk', 'Memory', 'Cpus', 'LoadAvg']:
                 metric = '.'.join(hierarchy + [k])
                 data[metric] += a[k]
@@ -91,8 +90,3 @@ def get_pool_slots(self, extras=[]):
             data[metric] += 1
 
     return data
-
-if __name__ == "__main__":
-    import pprint
-    import sys
-    pprint.pprint(dict(get_pool_slots(sys.argv[1])))

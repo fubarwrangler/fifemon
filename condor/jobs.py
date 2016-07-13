@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# *************  MODULE NOT USED!  *******************
+
 import time
 from collections import defaultdict
 import logging
@@ -6,7 +8,6 @@ import logging
 import htcondor
 
 logger = logging.getLogger(__name__)
-
 
 def find_bin(value, bins):
     for b in bins:
@@ -67,12 +68,11 @@ class Jobs(object):
         return metrics
 
     def job_walltime(self, job_classad):
-        now = job_classad.get("ServerTime", 0)
-        start = job_classad.get("JobCurrentStartDate", now)
-        return now - start
+
+        return job_classad.get('RemoteWallclockTime')
 
     def job_cputime(self, job_classad):
-        return job_classad.get("RemoteUserCpu", 0)
+        return job_classad.get("RemoteUserCpu", 0) + job_classad.get("RemoteSysCpu", 0)
 
     def job_bin(self, job_classad):
         bin = None
@@ -107,8 +107,10 @@ class Jobs(object):
 
         counts = defaultdict(int)
         for a in ads:
-            retries = 0
             logger.debug("Trying schedd: %s", a['Name'])
+            if a.get('CollectorHost', 'None') != self.pool:
+                continue
+            retries = 0
             while retries < max_retries:
                 try:
                     schedd = htcondor.Schedd(a)
@@ -116,7 +118,7 @@ class Jobs(object):
                     results = schedd.query(constraint, ["ClusterId", "ProcId", "Owner", "AccountingGroup",
                                                         "JobStatus", "JobUniverse", "RealExperiment", "Experiment",
                                                         "QDate", "ServerTime", "JobCurrentStartDate", "RemoteUserCpu",
-                                                        "EnteredCurrentStatus", "NumRestarts",
+                                                        "EnteredCurrentStatus", "RemoteSysCpu",
                                                         "RequestMemory", "ResidentSetSize_RAW",
                                                         "RequestDisk", "DiskUsage_RAW", "RequestCpus"])
                 except:
@@ -177,5 +179,6 @@ class Jobs(object):
 
 if __name__ == "__main__":
     import pprint, sys
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s - %(message)s")
     j = Jobs(pool=sys.argv[1])
     pprint.pprint(dict(j.get_job_count()))
