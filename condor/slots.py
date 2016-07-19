@@ -21,7 +21,8 @@ def get_pool_slots(self, extras=[]):
         ['SlotType', 'State', 'Name', 'SlotWeight', 'Cpus', 'TotalSlotCpus',
          'TotalCpus', 'Disk', 'TotalSlotDisk', 'TotalDisk', 'Memory', 'Owner',
          'TotalSlotMemory', 'TotalMemory', 'LoadAvg', 'TotalCondorLoadAvg',
-         'TotalLoadAvg', 'AccountingGroup', 'RemoteGroup', 'RemoteOwner'] + extras
+         'TotalLoadAvg', 'AccountingGroup', 'RemoteGroup', 'RemoteOwner',
+         'Turn_Off'] + extras
     )
 
     if startd_ads is None:
@@ -34,6 +35,9 @@ def get_pool_slots(self, extras=[]):
         state = a.get('State', 'Unknown')
 
         if slot_type == 'Partitionable':
+            if a.get('Turn_Off', False):
+                continue
+
             if a['Cpus'] == 0 or a['Memory'] < 500 or a['Disk'] < 1048576:
                 for k in ['TotalDisk', 'TotalSlotDisk',
                           'TotalMemory', 'TotalSlotMemory',
@@ -71,8 +75,9 @@ def get_pool_slots(self, extras=[]):
                 metric = '.'.join(hierarchy + [k])
                 data[metric] += a[k]
 
-                metric = '.'.join([hierarchy[0], 'totals', k])
-                data[metric] += a[k]
+                if not a.get('Turn_Off', False):
+                    metric = '.'.join([hierarchy[0], 'totals', k])
+                    data[metric] += a[k]
 
             metric = '.'.join(hierarchy + ['Weighted'])
             data[metric] += a.eval('SlotWeight')
@@ -84,8 +89,9 @@ def get_pool_slots(self, extras=[]):
             for k in ['Disk', 'Memory', 'Cpus']:
                 metric = '.'.join(hierarchy[:2] + [k])
                 data[metric] += a[k]
-                metric = '.'.join([hierarchy[0], 'totals', k])
-                data[metric] += a[k]
+                if not a.get('Turn_Off', False):
+                    metric = '.'.join([hierarchy[0], 'totals', k])
+                    data[metric] += a[k]
             metric = '.'.join(hierarchy[:2] + ['NumSlots'])
             data[metric] += 1
 
