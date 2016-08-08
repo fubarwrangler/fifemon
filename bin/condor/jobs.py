@@ -86,7 +86,7 @@ class Jobs(object):
     def job_walltime(self, job_classad):
         now = job_classad.get("ServerTime",0)
         start = job_classad.get("JobCurrentStartDate",now)
-        return now-start
+        return (now-start)*job_classad.get("RequestCpus",1)
 
     def job_cputime(self, job_classad):
         return job_classad.get("RemoteUserCpu",0)
