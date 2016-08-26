@@ -131,7 +131,7 @@ def get_options():
         'meta_namespace':    config.get("graphite", "meta_namespace"),
         'use_graphite':      config.getboolean("graphite", "enable"),
         'graphite_host':     config.get("graphite", "host"),
-        'graphite_port':     config.getint("graphite", "port"),
+        'graphite_pickle_port':     config.getint("graphite", "port"),
         'use_influxdb':      config.getboolean("influxdb", "enable"),
         'influxdb_host':     config.get("influxdb", "host"),
         'influxdb_port':     config.get("influxdb", "port"),
