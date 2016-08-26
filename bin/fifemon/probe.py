@@ -2,9 +2,6 @@
 import logging
 import time
 
-from graphite import Graphite
-from influx import Influxdb
-
 logger = logging.getLogger(__name__)
 
 class Probe(object):
@@ -33,8 +30,10 @@ class Probe(object):
             logger.setLevel(logging.INFO)
 
         if self.use_graphite:
+            from graphite import Graphite
             self.graphite = Graphite(self.graphite_host, self.graphite_pickle_port)
         if self.use_influxdb:
+            from influx import Influxdb
             self.influxdb = Influxdb(self.influxdb_host, self.influxdb_port, self.influxdb_db)
 
     def __unicode__(self):
