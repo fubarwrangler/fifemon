@@ -5,6 +5,7 @@ import cPickle
 import struct
 import socket
 import random
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +50,14 @@ class Graphite(object):
             post_data.append(t)
             logger.debug(str(t))
 
-        for host in self.graphite_hosts:
+        for host in list(self.graphite_hosts):
             if self.batch_send(host, post_data):
                 break
+            else:
+                self.graphite_hosts.remove(host)
         else:
             logger.critical("None of the hosts in %s could be used!", self.graphite_hosts)
+            sys.exit(1)
 
     def batch_send(self, host, post_data, batch_size=1000):
 
@@ -70,6 +74,7 @@ class Graphite(object):
                     return False
                 else:
                     return True
+        return True
 
     @staticmethod
     def _send(host, port, data):
@@ -78,8 +83,9 @@ class Graphite(object):
         try:
             s.connect((host, port))
             s.sendall(data)
-        except socket.error:
-            logger.exception("unable to send data to graphite at %s:%d\n", host, port)
+        except socket.error as e:
+            logger.error("unable to send data to graphite at %s:%d (%s)\n", host, port, e)
+            raise
         finally:
             s.close()
 
