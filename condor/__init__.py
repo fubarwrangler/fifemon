@@ -1,11 +1,10 @@
 import os
 os.environ['_CONDOR_GSI_SKIP_HOST_CHECK'] = "true"
 
-
 import probes
-
 import logging
 import htcondor
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +26,7 @@ class CondorProbe(probes.Probe):
     from .status import get_pool_status             # noqa: not used
     from .slots import get_pool_slots               # noqa: not used
     from .priorities import get_pool_priorities     # noqa: not used
+    from .jobs import get_job_count                 # noqa: not used
 
     def __init__(self, *args, **kwargs):
         self.meta = args[0]
@@ -103,9 +103,11 @@ class CondorProbe(probes.Probe):
                 self.graphite.send_dict(self.namespace+".priorities", data)
                 success += 1
 
-        return success > 0
+        if 'jobs' in self.probes:
+            logger.info("query pool %s jobs", self.name)
+            data = self.get_job_count()
+            if data:
+                self.graphite.send_dict(self.namespace+'.foo', data)
+                success += 1
 
-        # if self.post_pool_jobs:
-        #     logger.info('querying pool %s jobs', self.name)
-        #     data = self.jobs.get_job_count()
-        #     self.graphite.send_dict(self.namespace+".jobs", data, send_data=(not self.test))
+        return success > 0
