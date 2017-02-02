@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 CFGFILE = os.environ.get('CPROBECFG', '/etc/condor/probe.cfg')
 
+
 def get_options():
     parser = OptionParser(usage="usage: %prog [options] pool [probes to run...]")
     parser.add_option('-t', '--test', action="store_true", default=False,
