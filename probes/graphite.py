@@ -72,8 +72,6 @@ class Graphite(object):
                     self._send(host, self.graphite_pickle_port, message)
                 except:
                     return False
-                else:
-                    return True
         return True
 
     @staticmethod
