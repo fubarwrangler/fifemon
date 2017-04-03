@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 def sanitize(key):
     if key is None:
         return None
-    return key.replace(".", "_").replace("@", "-").replace(" ", "_")
+    return str(key).replace(".", "_").replace("@", "-").replace(" ", "_")
 
 
 def get_pool_slots(self, extras=[]):
@@ -67,7 +67,6 @@ def get_pool_slots(self, extras=[]):
             elif 'RemoteGroup' in a:
                 group = a['RemoteGroup'] if a['RemoteGroup'] != '<none>' else grp_default
             owner = a.get('Owner', a.get('RemoteOwner', 'UnknownOwner').split('@')[-1])
-
             for key in extras:
                 hierarchy.append(sanitize(a.get(key, 'undef')))
             hierarchy += [sanitize(group), sanitize(owner)]
