@@ -63,7 +63,7 @@ def get_pool_slots(self, extras=[]):
             grp_default = 'rootgroup'
             group = grp_default
             if 'AccountingGroup' in a:
-                group = '.'.join(a['AccountingGroup'].split('@')[0].split('.')[:-1])
+                group = '.'.join(str(a['AccountingGroup']).split('@')[0].split('.')[:-1])
             elif 'RemoteGroup' in a:
                 group = a['RemoteGroup'] if a['RemoteGroup'] != '<none>' else grp_default
             owner = a.get('Owner', a.get('RemoteOwner', 'UnknownOwner').split('@')[-1])
